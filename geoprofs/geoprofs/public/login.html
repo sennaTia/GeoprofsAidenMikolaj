@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8">
+  <title>VerlofPortaal - Inloggen</title>
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+  <div class="login-kaart">
+
+    <div class="icoon">📅</div>
+
+    <h1 class="titel">Verlof<span class="titel-accent">Portaal</span></h1>
+    <p class="subtekst">Log in om je verlof te beheren en plannen</p>
+
+    <!-- Wissel knoppen tussen Werknemer en Werkgever -->
+    <div class="tab-wissel">
+      <button id="knop-werknemer" class="tab-knop actief" onclick="wisselTab('werknemer')">Werknemer</button>
+      <button id="knop-werkgever" class="tab-knop" onclick="wisselTab('werkgever')">Werkgever</button>
+    </div>
+
+    <form>
+      <label for="email" class="form-label">E-mailadres</label>
+      <input type="email" id="email" class="form-input" placeholder="naam@bedrijf.nl">
+
+      <label for="wachtwoord" class="form-label">Wachtwoord</label>
+      <input type="password" id="wachtwoord" class="form-input" placeholder="Wachtwoord">
+
+      <a href="#" class="wachtwoord-vergeten">Wachtwoord vergeten?</a>
+
+      <!-- Knop staat uit, inloggen werkt nog niet -->
+      <button type="button" class="login-knop" disabled>Inloggen</button>
+    </form>
+
+    <p class="footer-tekst">
+      Nog geen account? <a href="#">Neem contact op met je werkgever.</a>
+    </p>
+
+  </div>
+
+  <script>
+    // Deze functie wisselt alleen de gekleurde knop, er wordt nog niks ingelogd
+    function wisselTab(gekozen) {
+      const werknemerKnop = document.getElementById('knop-werknemer');
+      const werkgeverKnop = document.getElementById('knop-werkgever');
+
+      if (gekozen === 'werknemer') {
+        werknemerKnop.classList.add('actief');
+        werkgeverKnop.classList.remove('actief');
+      } else {
+        werkgeverKnop.classList.add('actief');
+        werknemerKnop.classList.remove('actief');
+      }
+    }
+  </script>
+
+</body>
+</html>
