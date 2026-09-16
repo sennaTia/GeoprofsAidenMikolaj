@@ -61,16 +61,18 @@ class User extends Authenticatable
         return $this->hasMany(LeaveBalance::class);
     }
 
-    public function remainingDays(int $year): float
+    public function remainingDays(int $year): ?float
     {
         $balance = $this->leaveBalances()->where('year', $year)->first();
-        $total = $balance?->total_days ?? 0;
+        if( ! $balance) {
+            return null;
+        }
 
         $used = $this->leaveRequests()
             ->where('status', 'goedgekeurd')
             ->whereYear('start_date', $year)
             ->sum('days_requested');
 
-        return $total - $used;
+        return $balance->total_days - $used;
     }
 }
