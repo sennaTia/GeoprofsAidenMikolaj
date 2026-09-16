@@ -1,0 +1,128 @@
+/* Basis pagina styling */
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background-color: #e9ecef;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+}
+
+/* Het witte kaartje in het midden */
+.login-kaart {
+  background-color: #ffffff;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 350px;
+  text-align: center;
+}
+
+/* Icoon bovenaan */
+.icoon {
+  background-color: #dbeafe;
+  width: 60px;
+  height: 60px;
+  border-radius: 12px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 15px auto;
+  font-size: 28px;
+}
+
+.titel {
+  margin: 0;
+  font-size: 22px;
+}
+
+.titel-accent {
+  color: #2563eb;
+}
+
+.subtekst {
+  color: #6b7280;
+  font-size: 14px;
+  margin-top: 5px;
+  margin-bottom: 20px;
+}
+
+/* Werknemer / Werkgever knoppen */
+.tab-wissel {
+  display: flex;
+  background-color: #f1f3f5;
+  border-radius: 8px;
+  padding: 4px;
+  margin-bottom: 20px;
+}
+
+.tab-knop {
+  flex: 1;
+  padding: 8px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  color: #6b7280;
+}
+
+.tab-knop.actief {
+  background-color: #ffffff;
+  color: #2563eb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.15);
+}
+
+/* Formulier */
+.form-label {
+  display: block;
+  text-align: left;
+  font-size: 13px;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.form-input {
+  width: 100%;
+  padding: 10px;
+  margin-bottom: 15px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  box-sizing: border-box;
+  font-size: 14px;
+}
+
+.wachtwoord-vergeten {
+  display: block;
+  text-align: right;
+  font-size: 13px;
+  color: #2563eb;
+  text-decoration: none;
+  margin-bottom: 20px;
+}
+
+.login-knop {
+  width: 100%;
+  padding: 12px;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 15px;
+  font-weight: bold;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.footer-tekst {
+  font-size: 13px;
+  color: #6b7280;
+  margin-top: 20px;
+}
+
+.footer-tekst a {
+  color: #2563eb;
+  text-decoration: none;
+  font-weight: bold;
+}
