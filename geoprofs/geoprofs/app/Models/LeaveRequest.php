@@ -12,5 +12,6 @@ class LeaveRequest extends Model
     'end_date',
     'comments',
     'user_id',
+    'status',
 ];
 }

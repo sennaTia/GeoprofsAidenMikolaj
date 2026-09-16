@@ -11,3 +11,4 @@ Route::get('/user', function (Request $request) {
 
 Route::get('/leave-requests', [LeaveRequestController::class, 'index']);
 Route::post('/leave-requests', [LeaveRequestController::class, 'store']);
+Route::patch('/leave-requests/{id}', [LeaveRequestController::class, 'update']);

@@ -27,4 +27,17 @@ public function store(Request $request)
     return $leaveRequest;
 }
 
+public function update(Request $request, $id)
+{
+    $validated = $request->validate([
+    'status' => 'required|in:approved,rejected',
+]);
+
+$leaveRequest = LeaveRequest::findOrFail($id);
+
+$leaveRequest->update($validated);
+
+return $leaveRequest;
+}
+
 }
