@@ -46,3 +46,12 @@ class User extends Authenticatable
         ];
     }
 }
+    public function leaveRequests(): HasMany
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+    public function leaveTransactions(): HasMany
+    {
+        return $this->hasMany(LeaveTransaction::class);
+    }
+}
