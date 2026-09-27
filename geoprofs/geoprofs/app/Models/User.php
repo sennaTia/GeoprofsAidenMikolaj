@@ -45,4 +45,33 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+    public function leaveRequests()
+    {
+        return $this->hasMany(LeaveRequest::class);
+    }
+    public function leaveBalances()
+    {
+        return $this->hasMany(LeaveBalance::class);
+    }
+
+    public function remainingDays(int $year): ?float
+{
+    $balance = $this->leaveBalances()->where('year', $year)->first();
+
+    if (! $balance) {
+        return null;
+    }
+
+    $used = $this->leaveRequests()
+        ->where('status', 'goedgekeurd')
+        ->whereYear('start_date', $year)
+        ->sum('days_requested');
+
+    return $balance->total_days - $used;
+}
 }
