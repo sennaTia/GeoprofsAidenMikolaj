@@ -23,6 +23,15 @@ GeoProfs is een landmeetkundig bureau dat momenteel Excel gebruikt voor het regi
 * Het afwezigheidsniveau van een afdeling bekijken
 * Meldingen ontvangen bij onverwachte afwezigheid
 
+### Admin
+
+* Nieuwe office managers toevoegen
+* Teams toevoegen
+* Teams verwijderen
+* Verloftypes toevoegen
+* Verloftypes aanpassen
+* Verloftypes verwijderen
+
 ## Doel
 
 Het doel van het project is om het huidige Excel-proces van GeoProfs te digitaliseren en een overzichtelijk registratiesysteem te ontwikkelen voor verlof en afwezigheid.
