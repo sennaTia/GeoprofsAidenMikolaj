@@ -20,6 +20,7 @@ Route::middleware(['auth'])->group(function () {
 Route::middleware(['auth', 'can:approve-leave-request,leaveRequest'])->group(function () {
     Route::post('/leave-requests/{leaveRequest}/approve', [LeaveRequestController::class, 'approve']);
     Route::post('/leave-requests/{leaveRequest}/reject', [LeaveRequestController::class, 'reject']);
+    Route::post('/leave-requests/bulk-approve', [LeaveRequestController::class, 'approvebulk']);
 });
 
 Schedule::command('leave:create-yearly-balances')->yearlyOn(1, 1, '00:00');
