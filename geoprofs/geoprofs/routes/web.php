@@ -17,10 +17,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/verlofsaldo', [LeaveBalanceController::class, 'show']);
 });
 
-Route::middleware(['auth', 'can:approve-leave-request,leaveRequest'])->group(function () {
-    Route::post('/leave-requests/{leaveRequest}/approve', [LeaveRequestController::class, 'approve']);
-    Route::post('/leave-requests/{leaveRequest}/reject', [LeaveRequestController::class, 'reject']);
-    Route::post('/leave-requests/bulk-approve', [LeaveRequestController::class, 'approvebulk']);
+Route::middleware(['auth'])->group(function () {
+    Route::post('/verlofaanvragen/{leaveRequest}/goedkeuren', [LeaveRequestController::class, 'approve']);
+    Route::post('/verlofaanvragen/{leaveRequest}/afwijzen', [LeaveRequestController::class, 'reject']);
+    Route::post('/verlofaanvragen/bulk-goedkeuren', [LeaveRequestController::class, 'approvebulk']);
 });
 
 Schedule::command('leave:create-yearly-balances')->yearlyOn(1, 1, '00:00');
