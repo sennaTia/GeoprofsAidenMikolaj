@@ -19,16 +19,16 @@
       <button id="knop-werkgever" class="tab-knop" onclick="wisselTab('werkgever')">Werkgever</button>
     </div>
 
-    <form>
+    <form method="POST" action="/inloggen">
       <label for="email" class="form-label">E-mailadres</label>
-      <input type="email" id="email" class="form-input" placeholder="naam@bedrijf.nl">
+      <input type="email" id="email" name="email" class="form-input" placeholder="naam@bedrijf.nl">
 
       <label for="wachtwoord" class="form-label">Wachtwoord</label>
-      <input type="password" id="wachtwoord" class="form-input" placeholder="Wachtwoord">
+      <input type="password" id="wachtwoord" name="password" class="form-input" placeholder="Wachtwoord">
 
       <a href="#" class="wachtwoord-vergeten">Wachtwoord vergeten?</a>
 
-      <button type="button" class="login-knop">Inloggen</button>
+      <button type="submit" class="login-knop">Inloggen</button>
     </form>
 
     <p class="footer-tekst">
