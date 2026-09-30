@@ -2,6 +2,7 @@
 
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\LeaveBalanceController;
 use App\Http\Controllers\LeaveRequestController;
 use Illuminate\Support\Facades\Schedule;
@@ -14,9 +15,19 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth'])->group(function () {
-    Route::get('dashboard', function () {
-        return Inertia::render('dashboard');
-    })->name('dashboard');
+    Route::get('dashboard', [DashboardController::class, 'show'])->name('dashboard');
+    Route::get('/mijn-aanvragen', function () {
+        return Inertia::render('mijn-aanvragen');
+    });
+    Route::get('/kalender', function () {
+        return Inertia::render('kalender');
+    });
+    Route::get('/hulp', function () {
+        return Inertia::render('hulp');
+    });
+    Route::get('/verlof-aanvragen', function () {
+        return Inertia::render('verlof-aanvragen');
+    });
     Route::get('/verlofsaldo', [LeaveBalanceController::class, 'show']);
 });
 
