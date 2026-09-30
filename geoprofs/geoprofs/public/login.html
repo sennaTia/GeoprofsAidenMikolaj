@@ -14,7 +14,6 @@
     <h1 class="titel">Verlof<span class="titel-accent">Portaal</span></h1>
     <p class="subtekst">Log in om je verlof te beheren en plannen</p>
 
-    <!-- Wissel knoppen tussen Werknemer en Werkgever -->
     <div class="tab-wissel">
       <button id="knop-werknemer" class="tab-knop actief" onclick="wisselTab('werknemer')">Werknemer</button>
       <button id="knop-werkgever" class="tab-knop" onclick="wisselTab('werkgever')">Werkgever</button>
@@ -39,7 +38,6 @@
   </div>
 
   <script>
-    // Deze functie wisselt alleen de gekleurde knop, er wordt nog niks ingelogd
     function wisselTab(gekozen) {
       const werknemerKnop = document.getElementById('knop-werknemer');
       const werkgeverKnop = document.getElementById('knop-werkgever');
