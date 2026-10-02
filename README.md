@@ -46,6 +46,9 @@ Het doel van het project is om het huidige Excel-proces van GeoProfs te digitali
 
 Wordt tijdens het project ingevuld.
 
+## Regel mbt kleine commits
+Als je een kleine commit moet doe doe je dat in de dev branch ipv in je eigen branch
+
 ## Projectonderdelen
 
 Tijdens het project werken wij onder andere aan:
