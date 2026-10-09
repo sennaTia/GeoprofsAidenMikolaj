@@ -12,7 +12,7 @@ return new class extends Migration {
     {
         Schema::table('users', function (Blueprint $table) {
             $table->foreignId('department_id')->nullable()->constrained()->nullOnDelete();
-            $table->enum('role', ['werknemer', 'manager'])->default('werknemer');
+            $table->enum('role', ['werknemer', 'manager', 'office-manager', 'admin'])->default('werknemer');
         });
     }
 
@@ -22,7 +22,7 @@ return new class extends Migration {
     public function down(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            $table->dropForeign(['department_id']);
+            $table->dropConstraintForeignId(['department_id']);
             $table->dropColumn(['department_id', 'role']);
         });
     }
