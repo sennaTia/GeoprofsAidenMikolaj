@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use App\Http\Controllers\ApprovalProcedureController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -45,6 +46,11 @@ Route::post('/inloggen', function (Request $request) {
 
     return redirect('/login.html');
 })->withoutMiddleware(ValidateCsrfToken::class);
+
+Route::middleware('auth')->prefix('procedure')->group(function () {
+    Route::get('/afdeling/{departmentId}', [ApprovalProcedureController::class, 'show']);
+    Route::put('/afdeling/{departmentId}', [ApprovalProcedureController::class, 'update']);
+});
 
 
 
