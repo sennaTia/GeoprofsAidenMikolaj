@@ -5,6 +5,8 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use App\Models\LeaveRequest;
+use App\Models\LeaveApproval;
+use App\Models\ApprovalProcedure;
 
 class LeaveRequestController extends Controller
 {
@@ -12,9 +14,50 @@ class LeaveRequestController extends Controller
     {
         Gate::authorize('approve-leave-request', $leaveRequest);
 
+        $approver = auth()->user();
+        $employee = $leaveRequest->user;
+
+        if (in_array($leaveRequest->status, ['goedgekeurd', 'afgekeurd'])) {
+            return response()->json(['message' => 'Already handled.'], 422);
+        }
+
+        $procedure = ApprovalProcedure::where('department_id', $employee->department_id)->first();
+        $approverRole = $procedure ? $procedure->approver_role : 'manager';
+        $requiredApprovals = $procedure ? $procedure->required_approvals : 1;
+
+        if ($approver->role !== $approverRole) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        if ($approverRole === 'manager' && $approver->department_id != $employee->department_id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        if ($approver->id === $employee->id) {
+            return response()->json(['message' => 'Unauthorized.'], 403);
+        }
+
+        if ($leaveRequest->approvals()->where('user_id', $approver->id)->exists()) {
+            return response()->json(['message' => 'You already approved this request.'], 422);
+        }
+
+        LeaveApproval::create([
+            'leave_request_id' => $leaveRequest->id,
+            'user_id' => $approver->id,
+        ]);
+
+        if ($leaveRequest->approvals()->count() < $requiredApprovals) {
+            return response()->json([
+                'id' => $leaveRequest->id,
+                'status' => $leaveRequest->status,
+                'approvals' => $leaveRequest->approvals()->count(),
+                'required' => $requiredApprovals,
+            ]);
+        }
+
         $leaveRequest->update([
             'status' => 'goedgekeurd',
-            'approved_by' => auth()->id(),
+            'approved_by' => $approver->id,
         ]);
 
         return response()->json([
