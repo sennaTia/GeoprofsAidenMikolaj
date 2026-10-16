@@ -15,28 +15,39 @@ Route::get('/', function () {
 })->name('home');
 
 Route::middleware(['auth'])->group(function () {
+
     Route::get('dashboard', [DashboardController::class, 'show'])->name('dashboard');
-    Route::get('/mijn-aanvragen', function () {
-        return Inertia::render('mijn-aanvragen');
-    });
+
+    Route::get('/mijn-aanvragen', [LeaveRequestController::class, 'myRequests']);
+
+    Route::get('/team-aanvragen', [LeaveRequestController::class, 'teamRequests'])->name('team-aanvragen');
+    
     Route::get('/kalender', function () {
         return Inertia::render('kalender');
     });
+
     Route::get('/hulp', function () {
         return Inertia::render('hulp');
     });
+
     Route::get('/verlof-aanvragen', function () {
         return Inertia::render('verlof-aanvragen');
     });
+
     Route::get('/verlofsaldo', [LeaveBalanceController::class, 'show']);
 });
 
 Route::middleware(['auth'])->group(function () {
+
     Route::post('/verlofaanvragen/{leaveRequest}/goedkeuren', [LeaveRequestController::class, 'approve']);
+
     Route::post('/verlofaanvragen/{leaveRequest}/afwijzen', [LeaveRequestController::class, 'reject']);
+
     Route::post('/verlofaanvragen/bulk-goedkeuren', [LeaveRequestController::class, 'approvebulk']);
 });
+
 Route::post('/inloggen', function (Request $request) {
+
     if (Auth::attempt($request->only('email', 'password'))) {
         $request->session()->regenerate();
 
@@ -44,9 +55,8 @@ Route::post('/inloggen', function (Request $request) {
     }
 
     return redirect('/login.html');
+
 })->withoutMiddleware(ValidateCsrfToken::class);
-
-
 
 Schedule::command('leave:create-yearly-balances')->yearlyOn(1, 1, '00:00');
 
