@@ -29,6 +29,12 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/hulp', function () {
         return Inertia::render('hulp');
     });
+MijnAanvragenPage
+    Route::get('/team-aanvragen', function () {
+        return Inertia::render('team-aanvragen');
+    });
+
+ dev
 
     Route::get('/verlof-aanvragen', function () {
         return Inertia::render('verlof-aanvragen');

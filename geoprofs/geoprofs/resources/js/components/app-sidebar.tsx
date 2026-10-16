@@ -12,9 +12,15 @@ const mainNavItems: NavItem[] = [
         url: '/dashboard',
         icon: LayoutGrid,
     },
-    {
+       {
         title: 'Mijn Aanvragen',
         url: '/mijn-aanvragen',
+        icon: List,
+    },
+
+    {
+        title: 'Team Aanvragen',
+        url: '/team-aanvragen',
         icon: List,
     },
     {

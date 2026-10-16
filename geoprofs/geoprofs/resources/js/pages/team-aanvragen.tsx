@@ -4,10 +4,17 @@ import { Head } from '@inertiajs/react';
 
 const breadcrumbs: BreadcrumbItem[] = [
     {
+
+        title: 'Team aanvragen',
+
         title: 'Team Aanvragen',
+
         href: '/team-aanvragen',
     },
 ];
+
+
+
 
 type LeaveRequest = {
     id: number;
@@ -88,3 +95,4 @@ export default function TeamAanvragen({ leaveRequests }: Props) {
         </AppLayout>
     );
 }
+
