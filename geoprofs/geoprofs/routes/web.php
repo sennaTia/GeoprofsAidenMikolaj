@@ -25,6 +25,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/hulp', function () {
         return Inertia::render('hulp');
     });
+    Route::get('/team-aanvragen', function () {
+        return Inertia::render('team-aanvragen');
+    });
+
     Route::get('/verlof-aanvragen', function () {
         return Inertia::render('verlof-aanvragen');
     });
