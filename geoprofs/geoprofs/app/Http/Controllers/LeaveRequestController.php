@@ -5,11 +5,47 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use App\Models\LeaveRequest;
+use Inertia\Inertia;
+
 use App\Models\LeaveApproval;
 use App\Models\ApprovalProcedure;
 
+
 class LeaveRequestController extends Controller
 {
+    public function myRequests(Request $request)
+    {
+        $user = $request->user();
+
+        $leaveRequests = LeaveRequest::where('user_id', $user->id)->get();
+
+        return Inertia::render('mijn-aanvragen', [
+            'leaveRequests' => $leaveRequests
+        ]);
+    }
+
+
+
+    public function teamRequests(Request $request)
+{
+    $user = $request->user();
+
+    if ($user->role !== 'manager' || $user->department_id === null) {
+        abort(403, 'Geen toegang tot het teamoverzicht.');
+    }
+
+    $leaveRequests = LeaveRequest::with('user')
+        ->whereHas('user', function ($query) use ($user) {
+            $query->where('department_id', $user->department_id);
+        })
+        ->where('user_id', '!=', $user->id)
+        ->get();
+
+    return Inertia::render('team-aanvragen', [
+        'leaveRequests' => $leaveRequests
+    ]);
+}
+
     public function approve(LeaveRequest $leaveRequest)
     {
         Gate::authorize('approve-leave-request', $leaveRequest);
@@ -89,16 +125,26 @@ class LeaveRequestController extends Controller
         $overgeslagen = [];
 
         foreach (LeaveRequest::whereIn('id', $ids)->get() as $leaveRequest) {
+
             if (!Gate::allows('approve-leave-request', $leaveRequest)) {
-                $overgeslagen[] = ['id' => $leaveRequest->id, 'reden' => 'geen bevoegdheid of eigen aanvraag'];
+                $overgeslagen[] = [
+                    'id' => $leaveRequest->id,
+                    'reden' => 'geen bevoegdheid of eigen aanvraag'
+                ];
+
                 continue;
             }
 
             $jaar = (int) $leaveRequest->start_date->format('Y');
+
             $resterend = $leaveRequest->user->remainingDays($jaar);
 
             if ($resterend === null || $resterend < $leaveRequest->days_requested) {
-                $overgeslagen[] = ['id' => $leaveRequest->id, 'reden' => 'onvoldoende saldo'];
+                $overgeslagen[] = [
+                    'id' => $leaveRequest->id,
+                    'reden' => 'onvoldoende saldo'
+                ];
+
                 continue;
             }
 
