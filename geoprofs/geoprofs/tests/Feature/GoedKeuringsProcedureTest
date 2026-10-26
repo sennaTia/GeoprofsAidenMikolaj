@@ -1,0 +1,109 @@
+<?php
+
+use App\Http\Controllers\ApprovalProcedureController;
+use App\Http\Controllers\LeaveRequestController;
+use App\Models\Department;
+use App\Models\LeaveRequest;
+use App\Models\User;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
+$check = function (string $naam, bool $geslaagd) {
+    echo ($geslaagd ? '[OK]   ' : '[FOUT] ') . $naam . PHP_EOL;
+};
+
+$gooitFout = function (callable $actie, string $verwacht): bool {
+    try {
+        $actie();
+    } catch (Throwable $e) {
+        return $e instanceof $verwacht;
+    }
+    return false;
+};
+
+// Pas aan naar de beginstatus van een nieuwe aanvraag bij jullie
+$beginStatus = 'in behandeling';
+
+// Alles in een transactie, zodat de testdata aan het eind wordt teruggedraaid
+DB::beginTransaction();
+
+try {
+    $procedures = new ApprovalProcedureController();
+    $lrc = new LeaveRequestController();
+
+    $afdA = Department::create(['name' => 'Test Landmeten']);
+    $afdB = Department::create(['name' => 'Test Geo ICT']);
+
+    $admin = User::create(['name' => 'Test PO', 'email' => 'tinker-po@geoprofs.test', 'password' => 'password', 'role' => 'admin']);
+    $managerA1 = User::create(['name' => 'Manager A1', 'email' => 'tinker-ma1@geoprofs.test', 'password' => 'password', 'role' => 'manager', 'department_id' => $afdA->id]);
+    $managerA2 = User::create(['name' => 'Manager A2', 'email' => 'tinker-ma2@geoprofs.test', 'password' => 'password', 'role' => 'manager', 'department_id' => $afdA->id]);
+    $managerB = User::create(['name' => 'Manager B', 'email' => 'tinker-mb@geoprofs.test', 'password' => 'password', 'role' => 'manager', 'department_id' => $afdB->id]);
+    $werknemerA = User::create(['name' => 'Werknemer A', 'email' => 'tinker-wa@geoprofs.test', 'password' => 'password', 'role' => 'werknemer', 'department_id' => $afdA->id]);
+    $werknemerB = User::create(['name' => 'Werknemer B', 'email' => 'tinker-wb@geoprofs.test', 'password' => 'password', 'role' => 'werknemer', 'department_id' => $afdB->id]);
+
+    // Request namens een gebruiker, voor de ApprovalProcedureController
+    $als = function ($user, $data = []) {
+        $r = Request::create('/', 'PUT', $data);
+        $r->setUserResolver(fn () => $user);
+        return $r;
+    };
+
+    // Goedkeuren namens een gebruiker, geeft de statuscode terug (403 als de Gate weigert)
+    $keurGoed = function ($user, $aanvraag) use ($lrc) {
+        Auth::setUser($user);
+        try {
+            return $lrc->approve($aanvraag->fresh())->status();
+        } catch (\Illuminate\Auth\Access\AuthorizationException $e) {
+            return 403;
+        }
+    };
+
+    $nieuweProcedure = [
+        'approver_role' => 'manager',
+        'required_approvals' => 2,
+        'description' => 'Landmeten: twee managers keuren goed vanwege veldplanning.',
+    ];
+
+    // Scenario 1: onbevoegden kunnen de procedure niet wijzigen
+    $check('Werknemer kan procedure niet wijzigen (403)', $procedures->update($als($werknemerA, $nieuweProcedure), $afdA->id)->status() === 403);
+    $check('Manager kan procedure niet wijzigen (403)', $procedures->update($als($managerA1, $nieuweProcedure), $afdA->id)->status() === 403);
+
+    // Scenario 2: product owner past procedure van afdeling A aan
+    $check('Admin kan procedure van afdeling A wijzigen (200)', $procedures->update($als($admin, $nieuweProcedure), $afdA->id)->status() === 200);
+
+    // Scenario 3: procedure geldt alleen voor afdeling A
+    $check('Afdeling A heeft 2 goedkeuringen nodig', $procedures->show($afdA->id)->getData()->required_approvals == 2);
+    $check('Afdeling B houdt de standaard van 1 goedkeuring', $procedures->show($afdB->id)->getData()->required_approvals == 1);
+
+    // Scenario 4: procedure zonder goedkeurder wordt geweigerd
+    $check('Procedure met 0 goedkeuringen wordt geweigerd',
+        $gooitFout(fn () => $procedures->update($als($admin, array_merge($nieuweProcedure, ['required_approvals' => 0])), $afdA->id), \Illuminate\Validation\ValidationException::class));
+
+    // Scenario 5: eerste goedkeuring in afdeling A
+    $aanvraagA = LeaveRequest::create(['user_id' => $werknemerA->id, 'start_date' => '2026-10-05', 'end_date' => '2026-10-07', 'reason' => 'Vakantie', 'status' => $beginStatus]);
+    $check('Eerste manager van A kan goedkeuren (200)', $keurGoed($managerA1, $aanvraagA) === 200);
+    $check('Na 1 van 2 goedkeuringen is de aanvraag nog niet goedgekeurd', $aanvraagA->fresh()->status === $beginStatus);
+
+    // Scenario 6: dezelfde manager nog een keer
+    $check('Dezelfde manager kan niet twee keer goedkeuren (422)', $keurGoed($managerA1, $aanvraagA) === 422);
+
+    // Scenario 7: manager van een andere afdeling
+    $check('Manager van afdeling B kan aanvraag van A niet goedkeuren (403)', $keurGoed($managerB, $aanvraagA) === 403);
+
+    // Scenario 8: werknemer keurt eigen aanvraag goed
+    $check('Werknemer kan eigen aanvraag niet goedkeuren (403)', $keurGoed($werknemerA, $aanvraagA) === 403);
+
+    // Scenario 9: tweede manager van A
+    $check('Tweede manager van A kan goedkeuren (200)', $keurGoed($managerA2, $aanvraagA) === 200);
+    $check('Na 2 van 2 goedkeuringen is de aanvraag goedgekeurd', $aanvraagA->fresh()->status === 'goedgekeurd');
+    $check('Er zijn 2 goedkeuringen opgeslagen', $aanvraagA->approvals()->count() === 2);
+
+    // Scenario 10: afdeling B volgt de standaard
+    $aanvraagB = LeaveRequest::create(['user_id' => $werknemerB->id, 'start_date' => '2026-10-12', 'end_date' => '2026-10-12', 'reason' => 'Tandarts', 'status' => $beginStatus]);
+    $check('Manager van B kan goedkeuren (200)', $keurGoed($managerB, $aanvraagB) === 200);
+    $check('In afdeling B is 1 goedkeuring genoeg', $aanvraagB->fresh()->status === 'goedgekeurd');
+} finally {
+    DB::rollBack();
+    echo PHP_EOL . 'Testdata teruggedraaid.' . PHP_EOL;
+}
