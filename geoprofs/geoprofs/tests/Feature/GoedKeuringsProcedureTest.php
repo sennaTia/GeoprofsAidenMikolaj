@@ -23,7 +23,7 @@ $gooitFout = function (callable $actie, string $verwacht): bool {
 };
 
 // Pas aan naar de beginstatus van een nieuwe aanvraag bij jullie
-$beginStatus = 'in behandeling';
+$beginStatus = 'in_behandeling';
 
 // Alles in een transactie, zodat de testdata aan het eind wordt teruggedraaid
 DB::beginTransaction();
@@ -81,7 +81,7 @@ try {
         $gooitFout(fn () => $procedures->update($als($admin, array_merge($nieuweProcedure, ['required_approvals' => 0])), $afdA->id), \Illuminate\Validation\ValidationException::class));
 
     // Scenario 5: eerste goedkeuring in afdeling A
-    $aanvraagA = LeaveRequest::create(['user_id' => $werknemerA->id, 'start_date' => '2026-10-05', 'end_date' => '2026-10-07', 'reason' => 'Vakantie', 'status' => $beginStatus]);
+   $aanvraagA = LeaveRequest::create(['user_id' => $werknemerA->id, 'start_date' => '2026-10-05', 'end_date' => '2026-10-07', 'days_requested' => 3, 'reason' => 'Vakantie', 'status' => $beginStatus]);
     $check('Eerste manager van A kan goedkeuren (200)', $keurGoed($managerA1, $aanvraagA) === 200);
     $check('Na 1 van 2 goedkeuringen is de aanvraag nog niet goedgekeurd', $aanvraagA->fresh()->status === $beginStatus);
 
@@ -100,7 +100,7 @@ try {
     $check('Er zijn 2 goedkeuringen opgeslagen', $aanvraagA->approvals()->count() === 2);
 
     // Scenario 10: afdeling B volgt de standaard
-    $aanvraagB = LeaveRequest::create(['user_id' => $werknemerB->id, 'start_date' => '2026-10-12', 'end_date' => '2026-10-12', 'reason' => 'Tandarts', 'status' => $beginStatus]);
+   $aanvraagB = LeaveRequest::create(['user_id' => $werknemerB->id, 'start_date' => '2026-10-12', 'end_date' => '2026-10-12', 'days_requested' => 1, 'reason' => 'Tandarts', 'status' => $beginStatus]);
     $check('Manager van B kan goedkeuren (200)', $keurGoed($managerB, $aanvraagB) === 200);
     $check('In afdeling B is 1 goedkeuring genoeg', $aanvraagB->fresh()->status === 'goedgekeurd');
 } finally {

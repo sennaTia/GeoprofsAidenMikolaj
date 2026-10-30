@@ -58,8 +58,8 @@ class LeaveRequestController extends Controller
         }
 
         $procedure = ApprovalProcedure::where('department_id', $employee->department_id)->first();
-        $approverRole = $procedure ? $procedure->approver_role : 'manager';
-        $requiredApprovals = $procedure ? $procedure->required_approvals : 1;
+        $approverRole = $procedure ? $procedure->role : 'manager';
+        $requiredApprovals = $procedure ? $procedure->order : 1;
 
         if ($approver->role !== $approverRole) {
             return response()->json(['message' => 'Unauthorized.'], 403);
