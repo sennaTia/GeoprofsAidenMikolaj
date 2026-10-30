@@ -3,8 +3,8 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
-use app\models\Department;
-use app\models\ApprovalProcedure;
+use App\Models\Department;
+use App\Models\ApprovalProcedure;
 
 class ApprovalProcedureController extends Controller
 {
@@ -13,12 +13,20 @@ class ApprovalProcedureController extends Controller
         Department::findOrFail($departmentId);
 
         $procedure = ApprovalProcedure::where('department_id', $departmentId)->first();
-        
+
         if (!$procedure) {
-            return response()->json(['approver_role' => 'manager', 'required_approvals' => 1, 'description'=> 'Standaardprocedure: 1 goedkeuring van een manager van de afdeling.']);
+            return response()->json([
+                'approver_role' => 'manager',
+                'required_approvals' => 1,
+                'description' => 'Standaardprocedure: 1 goedkeuring van een manager van de afdeling.'
+            ]);
         }
 
-        return response()->json($procedure);
+        return response()->json([
+            'approver_role' => $procedure->role,
+            'required_approvals' => $procedure->order,
+            'description' => $procedure->description,
+        ]);
     }
 
     public function update(Request $request, $departmentId)
@@ -27,21 +35,27 @@ class ApprovalProcedureController extends Controller
             return response()->json(['error' => 'Unauthorized'], 403);
         }
 
-       Department::findOrFail($departmentId);
+        Department::findOrFail($departmentId);
 
-       $data = $request->validate([
+        $data = $request->validate([
             'approver_role' => 'required|in:manager,office-manager',
             'required_approvals' => 'required|integer|min:1|max:3',
             'description' => 'required|string|max:2000',
         ]);
 
-        $data['updated_by'] = $request->user()->id;
-
         $procedure = ApprovalProcedure::updateOrCreate(
             ['department_id' => $departmentId],
-            $data
+            [
+                'role' => $data['approver_role'],
+                'order' => $data['required_approvals'],
+                'description' => $data['description'],
+                'updated_by' => $request->user()->id,
+            ]
         );
 
-        return response()->json(['message' => 'Procedure saved.', 'procedure' => $procedure]);
+        return response()->json([
+            'message' => 'Procedure saved.',
+            'procedure' => $procedure
+        ]);
     }
 }
