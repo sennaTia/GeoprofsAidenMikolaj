@@ -31,10 +31,6 @@ Route::middleware(['auth'])->group(function () {
         return Inertia::render('hulp');
     });
 
-    Route::get('/team-aanvragen', function () {
-        return Inertia::render('team-aanvragen');
-    });
-
 
     Route::get('/verlof-aanvragen', function () {
         return Inertia::render('verlof-aanvragen');
@@ -70,7 +66,6 @@ Route::middleware('auth')->prefix('procedure')->group(function () {
 });
 
 
-})->withoutMiddleware(ValidateCsrfToken::class);
 
 Schedule::command('leave:create-yearly-balances')->yearlyOn(1, 1, '00:00');
 
