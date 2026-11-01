@@ -62,3 +62,8 @@ Schedule::command('leave:create-yearly-balances')->yearlyOn(1, 1, '00:00');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+
+
+Route::get('/afwezigheid-inzien', [LeaveRequestController::class, 'absenceOverview'])
+    ->middleware('auth')
+    ->name('afwezigheid.inzien');
