@@ -161,4 +161,40 @@ class LeaveRequestController extends Controller
             'overgeslagen' => $overgeslagen,
         ]);
     }
+public function absenceOverview(Request $request)
+{
+    $user = $request->user();
+
+    if ($user->role !== 'manager' || $user->department_id === null) {
+        abort(403, 'Geen toegang tot het afwezigheidsoverzicht.');
+    }
+
+    $today = now()->toDateString();
+
+    $totalEmployees = \App\Models\User::where('department_id', $user->department_id)
+        ->where('role', 'werknemer')
+        ->count();
+
+    $absentEmployees = LeaveRequest::where('status', 'goedgekeurd')
+        ->whereDate('start_date', '<=', $today)
+        ->whereDate('end_date', '>=', $today)
+        ->whereHas('user', function ($query) use ($user) {
+            $query->where('department_id', $user->department_id)
+                  ->where('role', 'werknemer');
+        })
+        ->distinct()
+        ->count('user_id');
+
+   $departmentName = \Illuminate\Support\Facades\DB::table('departments')
+    ->where('id', $user->department_id)
+    ->value('name');
+
+return Inertia::render('afwezigheid-inzien', [
+    'departmentName' => $departmentName,
+    'totalEmployees' => $totalEmployees,
+    'absentEmployees' => $absentEmployees,
+    'presentEmployees' => $totalEmployees - $absentEmployees,
+]);
 }
+
+    }
