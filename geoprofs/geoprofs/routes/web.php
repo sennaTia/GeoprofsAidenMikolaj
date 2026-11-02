@@ -10,6 +10,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use App\Http\Controllers\ApprovalProcedureController;
+use App\Http\Controllers\AbsenceTransferController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -65,6 +66,9 @@ Route::middleware('auth')->prefix('procedure')->group(function () {
     Route::put('/afdeling/{departmentId}', [ApprovalProcedureController::class, 'update']);
 });
 
+Route::get('/absence-transfers', [AbsenceTransferController::class, 'index']);
+Route::post('/leave-requests/{leaveRequestId}/transfer', [AbsenceTransferController::class, 'store']);
+Route::post('/absence-transfers/{id}/retry', [AbsenceTransferController::class, 'retry']);
 
 
 Schedule::command('leave:create-yearly-balances')->yearlyOn(1, 1, '00:00');
