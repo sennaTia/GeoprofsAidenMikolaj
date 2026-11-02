@@ -35,4 +35,10 @@ return [
         ],
     ],
 
+    'payroll' => [
+        'url' => env('PAYROLL_URL'),
+        'secret' => env('PAYROLL_SECRET'),
+        'hr_email' => env('HR_EMAIL'),
+    ],
+
 ];
