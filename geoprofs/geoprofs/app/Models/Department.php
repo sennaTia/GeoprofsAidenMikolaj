@@ -16,4 +16,9 @@ class Department extends Model
     {
         return $this->hasMany(ApprovalProcedure::class);
     }
+
+    public function staffingPlans()
+    {
+        return $this->hasMany(StaffingPlan::class);
+    }
 }
