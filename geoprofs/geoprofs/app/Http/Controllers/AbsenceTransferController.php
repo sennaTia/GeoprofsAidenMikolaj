@@ -2,9 +2,9 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
 use App\Models\AbsenceTransfer;
 use App\Models\LeaveRequest;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
@@ -15,7 +15,7 @@ class AbsenceTransferController extends Controller
 
     public function index(Request $request)
     {
-        if (!in_array($request->user()->role, ['office_management', 'admin'])) {
+        if (!in_array($request->user()->role, ['office-manager', 'admin'])) {
             return response()->json(['message' => 'Geen toegang.'], 403);
         }
 
@@ -24,7 +24,7 @@ class AbsenceTransferController extends Controller
 
     public function store(Request $request, $leaveRequestId)
     {
-        if (!in_array($request->user()->role, ['office_management', 'admin'])) {
+        if (!in_array($request->user()->role, ['office-manager', 'admin'])) {
             return response()->json(['message' => 'Geen toegang.'], 403);
         }
 
@@ -41,7 +41,7 @@ class AbsenceTransferController extends Controller
 
     public function retry(Request $request, $id)
     {
-        if (!in_array($request->user()->role, ['office_management', 'admin'])) {
+        if (!in_array($request->user()->role, ['office-manager', 'admin'])) {
             return response()->json(['message' => 'Geen toegang.'], 403);
         }
 
@@ -62,7 +62,7 @@ class AbsenceTransferController extends Controller
         AbsenceTransfer::where('status', 'failed')
             ->where('attempts', '<', self::MAX_ATTEMPTS)
             ->get()
-            ->each(fn($transfer) => $this->send($transfer));
+            ->each(fn ($transfer) => $this->send($transfer));
     }
 
     public function transfer(LeaveRequest $leaveRequest)
@@ -135,7 +135,7 @@ class AbsenceTransferController extends Controller
 
         Mail::raw(
             "Overdracht {$transfer->id} van verlofaanvraag {$transfer->leave_request_id} is mislukt: {$error}",
-            fn($message) => $message->to(config('services.payroll.hr_email'))->subject('Overdracht afwezigheidsgegevens mislukt')
+            fn ($message) => $message->to(config('services.payroll.hr_email'))->subject('Overdracht afwezigheidsgegevens mislukt')
         );
     }
 }
