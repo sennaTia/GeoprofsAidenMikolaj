@@ -23,3 +23,6 @@ Homestead.json
 Homestead.yaml
 npm-debug.log
 yarn-error.log
+PAYROLL_URL=https://betalingsinstantie.test/afwezigheid
+PAYROLL_SECRET=payrollSecretpaginaTest
+HR_EMAIL=hr@geoprofs.test
