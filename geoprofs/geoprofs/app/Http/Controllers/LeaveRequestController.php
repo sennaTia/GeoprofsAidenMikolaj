@@ -288,4 +288,41 @@ class LeaveRequestController extends Controller
             'dagen' => $dagen,
         ];
     }
+
+public function store(Request $request)
+{
+    $data = $request->validate([
+        'start_date' => ['required', 'date', 'after_or_equal:today'],
+        'end_date' => ['required', 'date', 'after_or_equal:start_date'],
+        'reason' => ['required', 'string', 'max:255'],
+    ]);
+
+    $start = \Carbon\Carbon::parse($data['start_date']);
+    $end = \Carbon\Carbon::parse($data['end_date']);
+
+    $days = 0;
+
+    for ($date = $start->copy(); $date->lte($end); $date->addDay()) {
+        if ($date->isWeekday()) {
+            $days++;
+        }
+    }
+
+    if ($days === 0) {
+        return back()->withErrors([
+            'start_date' => 'Selecteer minimaal één werkdag.',
+        ]);
+    }
+
+    LeaveRequest::create([
+        'user_id' => $request->user()->id,
+        'start_date' => $data['start_date'],
+        'end_date' => $data['end_date'],
+        'days_requested' => $days,
+        'reason' => $data['reason'],
+        'status' => 'in_behandeling',
+    ]);
+
+    return redirect('/mijn-aanvragen');
 }
+    }

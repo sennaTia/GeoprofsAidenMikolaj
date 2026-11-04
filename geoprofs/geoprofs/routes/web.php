@@ -38,6 +38,8 @@ Route::middleware(['auth'])->group(function () {
         return Inertia::render('verlof-aanvragen');
     });
 
+    Route::post('/verlof-aanvragen', [LeaveRequestController::class, 'store']);
+
     Route::get('/verlofsaldo', [LeaveBalanceController::class, 'show']);
 });
 
