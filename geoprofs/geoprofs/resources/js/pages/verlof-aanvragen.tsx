@@ -118,7 +118,7 @@ export default function VerlofAanvragen() {
                             onChange={(e) => setData('remark', e.target.value)}
                         />
                         <p className="text-right text-xs text-muted-foreground">{data.remark.length}/200</p>
-                        {errors.reason && <p className="text-sm text-red-500">{errors.reason}</p>}
+                        {errors.remark && <p className="text-sm text-red-500">{errors.remark}</p>}
                     </div>
 
                     {/* Knoppen */}
