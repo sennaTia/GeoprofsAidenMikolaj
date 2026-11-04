@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
 use App\Http\Controllers\ApprovalProcedureController;
 use App\Http\Controllers\AbsenceTransferController;
+use App\Http\Controllers\StaffingPlanController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -80,3 +81,8 @@ require __DIR__ . '/auth.php';
 Route::get('/afwezigheid-inzien', [LeaveRequestController::class, 'absenceOverview'])
     ->middleware('auth')
     ->name('afwezigheid.inzien');
+    
+Route::get('/leave-requests/{leaveRequest}/staffing', [LeaveRequestController::class, 'staffing'])->name('leave-requests.staffing');
+Route::get('/staffing-plans', [StaffingPlanController::class, 'index'])->name('staffing-plans.index');
+Route::post('/staffing-plans', [StaffingPlanController::class, 'store'])->name('staffing-plans.store');
+Route::put('/staffing-plans/default', [StaffingPlanController::class, 'updateDefault'])->name('staffing-plans.default');
