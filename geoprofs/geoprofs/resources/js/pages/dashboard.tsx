@@ -65,9 +65,20 @@ export default function Dashboard({ jaar, totaal, opgenomen, resterend, inBehand
                         <h1 className="text-2xl">Dashboard</h1>
                         <p className="text-muted-foreground text-sm">Je verloftegoed en recente aanvragen in één overzicht.</p>
                     </div>
-                    <Button asChild className="bg-blue-600 text-white hover:bg-blue-700">
-                        <Link href="/verlof-aanvragen">Verlof aanvragen</Link>
-                    </Button>
+
+                    <div className="flex flex-wrap gap-2">
+                        <Button asChild className="bg-blue-600 text-white hover:bg-blue-700">
+                            <Link href="/verlof-aanvragen">Verlof aanvragen</Link>
+                        </Button>
+
+                        <Button asChild variant="outline">
+                            <Link href="/team-aanvragen">Teamoverzicht</Link>
+                        </Button>
+
+                        <Button asChild variant="outline">
+                            <Link href="/afwezigheid-inzien">Afwezigheid inzien</Link>
+                        </Button>
+                    </div>
                 </div>
 
                 <div className="grid gap-4 md:grid-cols-3">

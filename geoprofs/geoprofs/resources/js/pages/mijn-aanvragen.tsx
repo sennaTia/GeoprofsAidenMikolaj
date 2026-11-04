@@ -51,12 +51,12 @@ export default function MijnAanvragen({ leaveRequests }: Props) {
                                 {leaveRequests.map((aanvraag) => (
                                     <tr key={aanvraag.id} className="border-t">
                                         <td className="p-3">
-    {aanvraag.start_date.substring(0, 10).split('-').reverse().join('-')}
-</td>
+     {aanvraag.start_date.substring(0, 10).split('-').reverse().join('-')}
+     </td>
 
-<td className="p-3">
-    {aanvraag.end_date.substring(0, 10).split('-').reverse().join('-')}
-</td>
+     <td className="p-3">
+     {aanvraag.end_date.substring(0, 10).split('-').reverse().join('-')}
+     </td>
                                         <td className="p-3">{aanvraag.days_requested}</td>
                                         <td className="p-3">{aanvraag.reason || '-'}</td>
                                         <td className="p-3">

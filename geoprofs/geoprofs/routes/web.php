@@ -9,6 +9,8 @@ use Illuminate\Support\Facades\Schedule;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Foundation\Http\Middleware\ValidateCsrfToken;
+use App\Http\Controllers\ApprovalProcedureController;
+use App\Http\Controllers\AbsenceTransferController;
 
 Route::get('/', function () {
     return Inertia::render('welcome');
@@ -29,12 +31,7 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/hulp', function () {
         return Inertia::render('hulp');
     });
-MijnAanvragenPage
-    Route::get('/team-aanvragen', function () {
-        return Inertia::render('team-aanvragen');
-    });
 
- dev
 
     Route::get('/verlof-aanvragen', function () {
         return Inertia::render('verlof-aanvragen');
@@ -64,7 +61,22 @@ Route::post('/inloggen', function (Request $request) {
 
 })->withoutMiddleware(ValidateCsrfToken::class);
 
+Route::middleware('auth')->prefix('procedure')->group(function () {
+    Route::get('/afdeling/{departmentId}', [ApprovalProcedureController::class, 'show']);
+    Route::put('/afdeling/{departmentId}', [ApprovalProcedureController::class, 'update']);
+});
+
+Route::get('/absence-transfers', [AbsenceTransferController::class, 'index']);
+Route::post('/leave-requests/{leaveRequestId}/transfer', [AbsenceTransferController::class, 'store']);
+Route::post('/absence-transfers/{id}/retry', [AbsenceTransferController::class, 'retry']);
+
+
 Schedule::command('leave:create-yearly-balances')->yearlyOn(1, 1, '00:00');
 
 require __DIR__ . '/settings.php';
 require __DIR__ . '/auth.php';
+
+
+Route::get('/afwezigheid-inzien', [LeaveRequestController::class, 'absenceOverview'])
+    ->middleware('auth')
+    ->name('afwezigheid.inzien');
