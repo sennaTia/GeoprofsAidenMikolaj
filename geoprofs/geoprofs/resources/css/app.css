@@ -156,3 +156,43 @@
         @apply bg-background text-foreground;
     }
 }
+
+/* Standaard instelling voor grote schermen (desktop) */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 260px;
+  background-color: #ffffff;
+  border-right: 1px solid #e5e7eb;
+  flex-shrink: 0;
+}
+
+.main-content {
+  flex-grow: 1;
+  padding: 24px;
+  background-color: #f9fafb;
+}
+
+/* Waneer het scherm smaller wordt dan 768px (mobiel/tablet) */
+@media (max-width: 768px) {
+  .dashboard-layout {
+    flex-direction: column; /* Zet de zijbalk BOVEN de pagina i.p.v. ernaast */
+  }
+
+  .sidebar {
+    width: 100%; /* Maak de zijbalk over de hele breedte */
+    height: auto;
+    border-right: none;
+    border-bottom: 1px solid #e5e7eb;
+  }
+
+  /* Optioneel: Maak het menu horizontaal of compacter op mobiel */
+  .sidebar nav ul {
+    display: flex;
+    overflow-x: auto; /* Zorgt dat je kunt scrollen door je menu-items als het te breed is */
+    padding: 10px;
+  }
+}
