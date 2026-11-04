@@ -9,8 +9,8 @@ class StaffingPlan extends Model
     protected $fillable = ['department_id', 'date', 'min_staffing', 'created_by'];
 
     protected $casts = [
-        'date' => 'date',
         'min_staffing' => 'integer',
+        'date' => 'date',
     ];
 
     public function department()

@@ -2,14 +2,14 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Department;
+use App\Models\StaffingPlan;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
-use\app\models\Department;
-use\app\models\StaffingPlan;
-use\carbon\Carbon;
 
 class StaffingPlanController extends Controller
 {
-     public function index(Request $request)
+    public function index(Request $request)
     {
         $afdeling = $this->afdelingVoor($request);
 
@@ -56,7 +56,7 @@ class StaffingPlanController extends Controller
     private function afdelingVoor(Request $request): Department
     {
         $user = $request->user();
-        abort_unless(in_array($user->role, ['manager', 'office_management', 'admin']), 403);
+        abort_unless(in_array($user->role, ['manager', 'office-manager', 'admin']), 403);
 
         if ($user->role === 'admin') {
             return Department::findOrFail($request->input('department_id'));
