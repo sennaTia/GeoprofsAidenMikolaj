@@ -30,7 +30,6 @@ Route::middleware(['auth'])->group(function () {
         return Inertia::render('hulp');
     });
 
-
     Route::get('/verlof-aanvragen', function () {
         return Inertia::render('verlof-aanvragen');
     });
