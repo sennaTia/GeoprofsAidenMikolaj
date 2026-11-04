@@ -2,14 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Gate;
-use App\Models\LeaveRequest;
-use Inertia\Inertia;
-
-use App\Models\LeaveApproval;
 use App\Models\ApprovalProcedure;
-
+use App\Models\LeaveApproval;
+use App\Models\LeaveRequest;
+use App\Models\StaffingPlan;
+use App\Models\User;
+use Carbon\CarbonPeriod;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
+use Inertia\Inertia;
 
 class LeaveRequestController extends Controller
 {
@@ -20,40 +22,38 @@ class LeaveRequestController extends Controller
         $leaveRequests = LeaveRequest::where('user_id', $user->id)->get();
 
         return Inertia::render('mijn-aanvragen', [
-            'leaveRequests' => $leaveRequests
+            'leaveRequests' => $leaveRequests,
         ]);
     }
 
-
-
     public function teamRequests(Request $request)
-{
-    $user = $request->user();
+    {
+        $user = $request->user();
 
-    if ($user->role !== 'manager' || $user->department_id === null) {
-        abort(403, 'Geen toegang tot het teamoverzicht.');
+        if ($user->role !== 'manager' || $user->department_id === null) {
+            abort(403, 'Geen toegang tot het teamoverzicht.');
+        }
+
+        $leaveRequests = LeaveRequest::with('user')
+            ->whereHas('user', function ($query) use ($user) {
+                $query->where('department_id', $user->department_id);
+            })
+            ->where('user_id', '!=', $user->id)
+            ->get();
+
+        return Inertia::render('team-aanvragen', [
+            'leaveRequests' => $leaveRequests,
+        ]);
     }
 
-    $leaveRequests = LeaveRequest::with('user')
-        ->whereHas('user', function ($query) use ($user) {
-            $query->where('department_id', $user->department_id);
-        })
-        ->where('user_id', '!=', $user->id)
-        ->get();
-
-    return Inertia::render('team-aanvragen', [
-        'leaveRequests' => $leaveRequests
-    ]);
-}
-
-    public function approve(LeaveRequest $leaveRequest)
+    public function approve(Request $request, LeaveRequest $leaveRequest)
     {
         Gate::authorize('approve-leave-request', $leaveRequest);
 
         $approver = auth()->user();
         $employee = $leaveRequest->user;
 
-        if (in_array($leaveRequest->status, ['goedgekeurd', 'afgekeurd'])) {
+        if (in_array($leaveRequest->status, ['goedgekeurd', 'afgewezen'])) {
             return response()->json(['message' => 'Already handled.'], 422);
         }
 
@@ -77,9 +77,25 @@ class LeaveRequestController extends Controller
             return response()->json(['message' => 'You already approved this request.'], 422);
         }
 
+        $request->validate([
+            'override_reason' => ['nullable', 'string', 'min:10', 'max:500'],
+        ]);
+
+        $bezetting = $this->berekenBezetting($leaveRequest);
+
+        if ($bezetting['onder_minimum'] && ! $request->filled('override_reason')) {
+            return response()->json([
+                'message' => 'Waarschuwing: door deze goedkeuring zakt de bezetting onder het minimum. Geef een reden op om toch goed te keuren.',
+                'bezetting' => $bezetting,
+            ], 409);
+        }
+
         LeaveApproval::create([
             'leave_request_id' => $leaveRequest->id,
             'user_id' => $approver->id,
+            'lowest_staffing' => $bezetting['krapste_dag']['verwacht'] ?? null,
+            'min_staffing' => $bezetting['krapste_dag']['minimum'] ?? null,
+            'override_reason' => $bezetting['onder_minimum'] ? $request->input('override_reason') : null,
         ]);
 
         if ($leaveRequest->approvals()->count() < $requiredApprovals) {
@@ -125,11 +141,10 @@ class LeaveRequestController extends Controller
         $overgeslagen = [];
 
         foreach (LeaveRequest::whereIn('id', $ids)->get() as $leaveRequest) {
-
-            if (!Gate::allows('approve-leave-request', $leaveRequest)) {
+            if (! Gate::allows('approve-leave-request', $leaveRequest)) {
                 $overgeslagen[] = [
                     'id' => $leaveRequest->id,
-                    'reden' => 'geen bevoegdheid of eigen aanvraag'
+                    'reden' => 'geen bevoegdheid of eigen aanvraag',
                 ];
 
                 continue;
@@ -142,7 +157,16 @@ class LeaveRequestController extends Controller
             if ($resterend === null || $resterend < $leaveRequest->days_requested) {
                 $overgeslagen[] = [
                     'id' => $leaveRequest->id,
-                    'reden' => 'onvoldoende saldo'
+                    'reden' => 'onvoldoende saldo',
+                ];
+
+                continue;
+            }
+
+            if ($this->berekenBezetting($leaveRequest)['onder_minimum']) {
+                $overgeslagen[] = [
+                    'id' => $leaveRequest->id,
+                    'reden' => 'bezetting onder minimum, los beoordelen',
                 ];
 
                 continue;
@@ -161,40 +185,107 @@ class LeaveRequestController extends Controller
             'overgeslagen' => $overgeslagen,
         ]);
     }
-public function absenceOverview(Request $request)
-{
-    $user = $request->user();
 
-    if ($user->role !== 'manager' || $user->department_id === null) {
-        abort(403, 'Geen toegang tot het afwezigheidsoverzicht.');
+    public function absenceOverview(Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->role !== 'manager' || $user->department_id === null) {
+            abort(403, 'Geen toegang tot het afwezigheidsoverzicht.');
+        }
+
+        $today = now()->toDateString();
+
+        $totalEmployees = User::where('department_id', $user->department_id)
+            ->where('role', 'werknemer')
+            ->count();
+
+        $absentEmployees = LeaveRequest::where('status', 'goedgekeurd')
+            ->whereDate('start_date', '<=', $today)
+            ->whereDate('end_date', '>=', $today)
+            ->whereHas('user', function ($query) use ($user) {
+                $query->where('department_id', $user->department_id)
+                    ->where('role', 'werknemer');
+            })
+            ->distinct()
+            ->count('user_id');
+
+        $departmentName = DB::table('departments')
+            ->where('id', $user->department_id)
+            ->value('name');
+
+        return Inertia::render('afwezigheid-inzien', [
+            'departmentName' => $departmentName,
+            'totalEmployees' => $totalEmployees,
+            'absentEmployees' => $absentEmployees,
+            'presentEmployees' => $totalEmployees - $absentEmployees,
+        ]);
     }
 
-    $today = now()->toDateString();
+    public function staffing(LeaveRequest $leaveRequest)
+    {
+        Gate::authorize('approve-leave-request', $leaveRequest);
 
-    $totalEmployees = \App\Models\User::where('department_id', $user->department_id)
-        ->where('role', 'werknemer')
-        ->count();
+        return response()->json($this->berekenBezetting($leaveRequest));
+    }
 
-    $absentEmployees = LeaveRequest::where('status', 'goedgekeurd')
-        ->whereDate('start_date', '<=', $today)
-        ->whereDate('end_date', '>=', $today)
-        ->whereHas('user', function ($query) use ($user) {
-            $query->where('department_id', $user->department_id)
-                  ->where('role', 'werknemer');
-        })
-        ->distinct()
-        ->count('user_id');
+    private function berekenBezetting(LeaveRequest $leaveRequest): array
+    {
+        $aanvrager = $leaveRequest->user;
+        $afdeling = $aanvrager->department;
+        abort_if(! $afdeling, 422, 'Aanvrager heeft geen afdeling.');
 
-   $departmentName = \Illuminate\Support\Facades\DB::table('departments')
-    ->where('id', $user->department_id)
-    ->value('name');
+        $teamIds = User::where('department_id', $afdeling->id)
+            ->whereIn('role', ['werknemer', 'manager'])
+            ->pluck('id');
 
-return Inertia::render('afwezigheid-inzien', [
-    'departmentName' => $departmentName,
-    'totalEmployees' => $totalEmployees,
-    'absentEmployees' => $absentEmployees,
-    'presentEmployees' => $totalEmployees - $absentEmployees,
-]);
+        $overlappend = LeaveRequest::whereIn('user_id', $teamIds)
+            ->where('id', '!=', $leaveRequest->id)
+            ->whereIn('status', ['goedgekeurd', 'in_behandeling'])
+            ->whereDate('start_date', '<=', $leaveRequest->end_date)
+            ->whereDate('end_date', '>=', $leaveRequest->start_date)
+            ->get();
+
+        $planning = StaffingPlan::where('department_id', $afdeling->id)
+            ->whereBetween('date', [$leaveRequest->start_date->toDateString(), $leaveRequest->end_date->toDateString()])
+            ->get()
+            ->keyBy('date');
+
+        $dagen = [];
+        foreach (CarbonPeriod::create($leaveRequest->start_date, $leaveRequest->end_date) as $dag) {
+            if ($dag->isWeekend()) {
+                continue;
+            }
+
+            $opDezeDag = $overlappend->filter(fn ($r) => $r->start_date->lte($dag) && $r->end_date->gte($dag));
+
+            $afwezigIds = $opDezeDag->where('status', 'goedgekeurd')
+                ->pluck('user_id')
+                ->push($aanvrager->id)
+                ->unique()
+                ->intersect($teamIds);
+
+            $verwacht = $teamIds->count() - $afwezigIds->count();
+            $minimum = $planning->get($dag->toDateString())?->min_staffing ?? $afdeling->min_staffing;
+
+            $dagen[] = [
+                'datum' => $dag->toDateString(),
+                'afwezig' => $afwezigIds->count(),
+                'openstaand' => $opDezeDag->where('status', 'in_behandeling')->count(),
+                'verwacht' => $verwacht,
+                'minimum' => $minimum,
+                'onder_minimum' => $verwacht < $minimum,
+            ];
+        }
+
+        $krapste = collect($dagen)->sortBy(fn ($d) => $d['verwacht'] - $d['minimum'])->first();
+
+        return [
+            'afdeling' => $afdeling->name,
+            'teamgrootte' => $teamIds->count(),
+            'onder_minimum' => collect($dagen)->contains('onder_minimum', true),
+            'krapste_dag' => $krapste,
+            'dagen' => $dagen,
+        ];
+    }
 }
-
-    }
