@@ -7,7 +7,7 @@ const breadcrumbs: BreadcrumbItem[] = [
 
         title: 'Team aanvragen',
 
-        title: 'Team Aanvragen',
+        
 
         href: '/team-aanvragen',
     },
