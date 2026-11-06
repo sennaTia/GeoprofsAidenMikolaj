@@ -89,7 +89,7 @@ export default function Dashboard({ jaar, totaal, opgenomen, resterend, inBehand
                     />
                     <SaldoKaart
                         titel="Resterend tegoed"
-                        waarde={resterend === null ? '–' : dagen(resterend)}
+                        waarde={resterend === null ? '-' : dagen(resterend)}
                         toelichting={resterend === null ? `nog geen saldo ingesteld voor ${jaar}` : `beschikbaar in ${jaar}`}
                     />
                     <SaldoKaart

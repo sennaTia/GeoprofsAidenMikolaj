@@ -21,9 +21,9 @@ class DashboardController extends Controller
 
         return Inertia::render('dashboard', [
             'jaar' => $jaar,
-            'totaal' => $saldo ? (float) $saldo->total_days : null,
+            'totaal' => $saldo ? (float) $saldo->total_days : 30.0,
             'opgenomen' => $opgenomen,
-            'resterend' => $saldo ? (float) $saldo->total_days - $opgenomen : null,
+            'resterend' => ($saldo ? (float) $saldo->total_days : 30.0) - $opgenomen,
             'inBehandeling' => (float) (clone $inBehandeling)->sum('days_requested'),
             'aantalOpenstaand' => (clone $inBehandeling)->count(),
             'recenteAanvragen' => $user->leaveRequests()
