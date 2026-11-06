@@ -187,40 +187,58 @@ class LeaveRequestController extends Controller
     }
 
     public function absenceOverview(Request $request)
-    {
-        $user = $request->user();
+{
+    $user = $request->user();
 
-        if ($user->role !== 'manager' || $user->department_id === null) {
-            abort(403, 'Geen toegang tot het afwezigheidsoverzicht.');
-        }
-
-        $today = now()->toDateString();
-
-        $totalEmployees = User::where('department_id', $user->department_id)
-            ->where('role', 'werknemer')
-            ->count();
-
-        $absentEmployees = LeaveRequest::where('status', 'goedgekeurd')
-            ->whereDate('start_date', '<=', $today)
-            ->whereDate('end_date', '>=', $today)
-            ->whereHas('user', function ($query) use ($user) {
-                $query->where('department_id', $user->department_id)
-                    ->where('role', 'werknemer');
-            })
-            ->distinct()
-            ->count('user_id');
-
-        $departmentName = DB::table('departments')
-            ->where('id', $user->department_id)
-            ->value('name');
-
-        return Inertia::render('afwezigheid-inzien', [
-            'departmentName' => $departmentName,
-            'totalEmployees' => $totalEmployees,
-            'absentEmployees' => $absentEmployees,
-            'presentEmployees' => $totalEmployees - $absentEmployees,
-        ]);
+    // Alleen managers met een afdeling hebben toegang
+    if ($user->role !== 'manager' || $user->department_id === null) {
+        abort(403, 'Geen toegang tot het afwezigheidsoverzicht.');
     }
+
+    $today = now()->toDateString();
+
+    // Haal alle werknemers van de afdeling op
+    $employees = User::where('department_id', $user->department_id)
+        ->where('role', 'werknemer')
+        ->orderBy('name')
+        ->get(['id', 'name']);
+
+    // Zoek werknemers die vandaag goedgekeurd verlof hebben
+    $absentIds = LeaveRequest::where('status', 'goedgekeurd')
+        ->whereDate('start_date', '<=', $today)
+        ->whereDate('end_date', '>=', $today)
+        ->whereIn('user_id', $employees->pluck('id'))
+        ->distinct()
+        ->pluck('user_id');
+
+    // Geef iedere werknemer een aanwezigheidsstatus
+    $employeeStatuses = $employees->map(function ($employee) use ($absentIds) {
+        return [
+            'id' => $employee->id,
+            'name' => $employee->name,
+            'status' => $absentIds->contains($employee->id)
+                ? 'afwezig'
+                : 'aanwezig',
+        ];
+    });
+
+    $totalEmployees = $employees->count();
+    $absentEmployees = $employeeStatuses
+        ->where('status', 'afwezig')
+        ->count();
+
+    $departmentName = DB::table('departments')
+        ->where('id', $user->department_id)
+        ->value('name');
+
+    return Inertia::render('afwezigheid-inzien', [
+        'departmentName' => $departmentName,
+        'totalEmployees' => $totalEmployees,
+        'absentEmployees' => $absentEmployees,
+        'presentEmployees' => $totalEmployees - $absentEmployees,
+        'employeeStatuses' => $employeeStatuses->values()->all(),
+    ]);
+}
 
     public function staffing(LeaveRequest $leaveRequest)
     {
