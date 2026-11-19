@@ -66,7 +66,7 @@ describe('Test scenario: Inloggen', function () {
 
     cy.visit('http://geoprofs.test/settings/profile');
 
-    cy.get('#name').should('be.visible');
+    cy.get('#name').should('have.value', 'Test Werknemer');
     cy.get('#email').should('have.value', 'test@geoprofs.test');
 
     cy.getCookie('XSRF-TOKEN').then(function (cookie) {
@@ -74,7 +74,7 @@ describe('Test scenario: Inloggen', function () {
         method: 'PATCH',
         url: 'http://geoprofs.test/settings/profile',
         headers: { 'X-XSRF-TOKEN': decodeURIComponent(cookie.value) },
-        body: { name: 'Sanne', email: 'test@geoprofs.test', role: 'manager' },
+        body: { name: 'Test Werknemer', email: 'test@geoprofs.test', role: 'manager' },
       }).its('status').should('eq', 200);
     });
 
@@ -133,6 +133,27 @@ describe('Test scenario: Inloggen', function () {
   });
 
   it('Inloggen-6: Beveiligde paginas openen zonder in te loggen', function () {
+    cy.visit('http://geoprofs.test/login');
+    cy.get('#email').type('test@geoprofs.test');
+    cy.get('#password').type('Welkom123!');
+    cy.get('button[type="submit"]').click();
+    cy.url().should('eq', 'http://geoprofs.test/dashboard');
+
+    cy.visit('http://geoprofs.test/verlof-aanvragen');
+    cy.get('input[type="date"]').eq(0).type('2026-12-07');
+    cy.get('input[type="date"]').eq(1).type('2026-12-09');
+    cy.get('textarea').type('Inloggen-6');
+    cy.get('button[type="submit"]').click();
+    cy.url().should('eq', 'http://geoprofs.test/mijn-aanvragen');
+
+    cy.exec(`php artisan tinker --execute="echo App\\Models\\LeaveRequest::where('reason', 'Vakantie: Inloggen-6')->latest('id')->first()->id;"`)
+      .its('stdout').then(function (id) {
+        cy.wrap(id.trim()).as('aanvraagId');
+      });
+
+    cy.get('[data-sidebar="footer"] [data-sidebar="menu-button"]').click();
+    cy.contains('Log out').click();
+
     cy.visit('http://geoprofs.test/dashboard');
 
     cy.url().should('include', '/login');
@@ -143,15 +164,17 @@ describe('Test scenario: Inloggen', function () {
     cy.url().should('include', '/login');
     cy.get('#email').should('be.visible');
 
-    cy.request({
-      method: 'POST',
-      url: 'http://geoprofs.test/verlofaanvragen/1/goedkeuren',
-      failOnStatusCode: false,
-      followRedirect: false,
-    }).its('status').should('be.oneOf', [302, 401, 403, 419]);
+    cy.get('@aanvraagId').then(function (aanvraagId) {
+      cy.request({
+        method: 'POST',
+        url: 'http://geoprofs.test/verlofaanvragen/' + aanvraagId + '/goedkeuren',
+        failOnStatusCode: false,
+        followRedirect: false,
+      }).its('status').should('be.oneOf', [302, 401, 403, 419]);
 
-    cy.exec(`php artisan tinker --execute="echo App\\Models\\LeaveRequest::find(1)->status;"`)
-      .its('stdout').should('contain', 'in_behandeling');
+      cy.exec(`php artisan tinker --execute="echo App\\Models\\LeaveRequest::find(${aanvraagId})->status;"`)
+        .its('stdout').should('contain', 'in_behandeling');
+    });
   });
 
   it('Inloggen-7: Wachtwoorden zijn versleuteld opgeslagen', function () {
