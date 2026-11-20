@@ -1,6 +1,6 @@
 import { Head, useForm } from '@inertiajs/react';
 import { LoaderCircle } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { FormEventHandler, useState } from 'react';
 
 import InputError from '@/components/input-error';
 import TextLink from '@/components/text-link';
@@ -22,17 +22,35 @@ interface LoginProps {
 }
 
 export default function Login({ status, canResetPassword }: LoginProps) {
-    const { data, setData, post, processing, errors, reset } = useForm<LoginForm>({
+    const { data, setData, post, processing, errors, reset, clearErrors } = useForm<LoginForm>({
         email: '',
         password: '',
         remember: false,
     });
 
+    const [showErrorPopup, setShowErrorPopup] = useState(false);
+    const [popupMessage, setPopupMessage] = useState('');
+
     const submit: FormEventHandler = (e) => {
         e.preventDefault();
+        setShowErrorPopup(false);
+
         post(route('login'), {
+            onError: (formErrors) => {
+                setPopupMessage(
+                    formErrors.email ||
+                        formErrors.password ||
+                        'Verkeerd e-mailadres of fout wachtwoord. Probeer het opnieuw.',
+                );
+                setShowErrorPopup(true);
+            },
             onFinish: () => reset('password'),
         });
+    };
+
+    const closePopup = () => {
+        setShowErrorPopup(false);
+        clearErrors();
     };
 
     return (
@@ -99,6 +117,20 @@ export default function Login({ status, canResetPassword }: LoginProps) {
             </form>
 
             {status && <div className="mb-4 text-center text-sm font-medium text-green-600">{status}</div>}
+
+            {showErrorPopup && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+                    <div className="bg-background text-foreground w-full max-w-sm rounded-lg border p-6 shadow-lg">
+                        <h2 className="text-lg font-semibold text-red-600">Fout bij inloggen</h2>
+                        <p className="text-muted-foreground mt-2 text-sm">{popupMessage}</p>
+                        <div className="mt-5 flex justify-end">
+                            <Button type="button" onClick={closePopup}>
+                                Oké
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AuthLayout>
     );
 }
