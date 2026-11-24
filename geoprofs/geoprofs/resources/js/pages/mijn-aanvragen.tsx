@@ -60,14 +60,26 @@ export default function MijnAanvragen({ leaveRequests }: Props) {
                                         <td className="p-3">{aanvraag.days_requested}</td>
                                         <td className="p-3">{aanvraag.reason || '-'}</td>
                                         <td className="p-3">
-                                            {aanvraag.status === 'in_behandeling'
-                                                ? 'In behandeling'
-                                                : aanvraag.status === 'goedgekeurd'
-                                                  ? 'Goedgekeurd'
-                                                  : aanvraag.status === 'afgewezen'
-                                                    ? 'Afgewezen'
-                                                    : aanvraag.status}
-                                        </td>
+    <span
+        className={`verlof-status ${
+            aanvraag.status === 'goedgekeurd'
+                ? 'verlof-status--goedgekeurd'
+                : aanvraag.status === 'afgewezen'
+                  ? 'verlof-status--afgewezen'
+                  : aanvraag.status === 'in_behandeling'
+                    ? 'verlof-status--in-behandeling'
+                    : ''
+        }`}
+    >
+        {aanvraag.status === 'in_behandeling'
+            ? 'In behandeling'
+            : aanvraag.status === 'goedgekeurd'
+              ? 'Goedgekeurd'
+              : aanvraag.status === 'afgewezen'
+                ? 'Afgewezen'
+                : aanvraag.status}
+    </span>
+</td>
                                     </tr>
                                 ))}
                             </tbody>
